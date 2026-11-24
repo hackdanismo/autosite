@@ -3,7 +3,7 @@ title: "My first news article"
 description: "An introduction to our latest news."
 publishDate: 2026-11-24
 author: "Dan Jackson"
-featured: true
+featured: false
 heroImage: "images/news/new-website.jpg"
 ---
 

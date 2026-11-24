@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+
+const articles = (await getCollection('articles')).sort(
+  (a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime()
+);
+---
+
+<h1>Latest news</h1>
+
+{articles.map((article) => (
+  <article>
+    <h2>
+      <a href={`/articles/${article.id}/`}>
+        {article.data.title}
+      </a>
+    </h2>
+
+    <p>{article.data.publishDate.toLocaleDateString('en-GB')}</p>
+
+    <p>{article.data.description}</p>
+
+    <a href={`/articles/${article.id}/`}>
+      Read more
+    </a>
+  </article>
+))}

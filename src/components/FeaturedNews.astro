@@ -1,12 +1,17 @@
 ---
 import { getCollection } from 'astro:content';
 
-const articles = await getCollection(
+const news = await getCollection(
     'news',
     ({ data }) => data.featured === true
 );
 
-const article = articles.sort(
+const articles = await getCollection(
+    'articles',
+    ({ data }) => data.featured === true
+);
+
+const article = [...news, ...articles].sort(
     (a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime()
 )[0];
 ---
@@ -18,14 +23,23 @@ const article = articles.sort(
         )}
 
         <div class="hero-content">
-            <span class="eyebrow">Featured news</span>
+            <span class="eyebrow">
+                {article.collection === 'news'
+                    ? 'Featured news'
+                    : 'Featured article'}
+            </span>
 
             <h1>{article.data.title}</h1>
 
             <p>{article.data.description}</p>
 
-            <a href={`/news/${article.id}/`} class="hero-button">
-                Read full article &rarr;
+            <a 
+                href={`/${article.collection}/${article.id}/`} 
+                class="hero-button"
+            >
+                {article.collection === 'news'
+                    ? 'Read full story'
+                    : 'Read full article'} &rarr;
             </a>
         </div>
     </section>
