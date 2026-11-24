@@ -32,4 +32,26 @@ const articles = defineCollection({
     }),
 });
 
-export const collections = { news, articles };
+const garage = defineCollection({
+    loader: glob({
+        pattern: '**/*.md',
+        base: './src/content/garage',
+    }),
+    schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        manufacturer: z.string(),
+        model: z.string(),
+        year: z.number(),
+        generation: z.string().optional(),
+        publishDate: z.coerce.date(),
+        featured: z.boolean().default(false),
+        heroImage: z.string(),
+        engine: z.string().optional(),
+        power: z.string().optional(),
+        transmission: z.string().optional(),
+        drivetrain: z.string().optional(),
+    }),
+});
+
+export const collections = { news, articles, garage };

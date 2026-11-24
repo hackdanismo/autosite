@@ -1,0 +1,156 @@
+---
+import { getCollection } from 'astro:content';
+
+const cars = await getCollection(
+    'garage',
+    ({ data }) => data.featured === true
+);
+
+const car = cars.sort(
+    (a, b) =>
+        b.data.publishDate.getTime() -
+        a.data.publishDate.getTime()
+)[0];
+---
+
+{car && (
+    <section class="garage-section">
+        <h2>Garage</h2>
+
+        <a href={`/garage/${car.id}/`} class="garage-panel">
+
+            <div class="garage-image">
+                <img
+                    src={car.data.heroImage}
+                    alt={car.data.title}
+                    loading="lazy"
+                />
+            </div>
+
+            <div class="garage-content">
+                <span class="eyebrow">
+                    From the garage
+                </span>
+
+                <h3>{car.data.title}</h3>
+
+                <span class="car-details">
+                    {car.data.year}
+                    {car.data.generation && (
+                        <> &middot; {car.data.generation} Generation</>
+                    )}
+                </span>
+
+                <p>{car.data.description}</p>
+
+                <span class="garage-link">
+                    Explore the car &rarr;
+                </span>
+            </div>
+
+        </a>
+    </section>
+)}
+
+<style>
+    .garage-section {
+        margin-block: 3rem;
+    }
+
+    .garage-panel {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        min-height: 400px;
+        background: #171717;
+        color: white;
+        text-decoration: none;
+        overflow: hidden;
+    }
+
+    .garage-image {
+        position: relative;
+        min-height: 400px;
+        overflow: hidden;
+    }
+
+    .garage-image img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .garage-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: clamp(2rem, 5vw, 4rem);
+    }
+
+    .eyebrow {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #bcbcbc;
+    }
+
+    h3 {
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        line-height: 1.1;
+        margin: 1rem 0;
+    }
+
+    .car-details {
+        font-size: 0.875rem;
+        color: #bcbcbc;
+    }
+
+    p {
+        font-size: 1rem;
+        line-height: 1.7;
+        margin: 1.5rem 0;
+    }
+
+    .garage-link {
+        display: inline-block;
+        font-weight: 600;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid white;
+    }
+
+    .garage-panel:hover .garage-image img {
+        transform: scale(1.05);
+    }
+
+    .garage-panel:hover .garage-link {
+        border-color: transparent;
+    }
+
+    .garage-panel:focus-visible {
+        outline: 3px solid #888;
+        outline-offset: 4px;
+    }
+
+    @media (max-width: 768px) {
+        .garage-panel {
+            grid-template-columns: 1fr;
+        }
+
+        .garage-image {
+            min-height: 280px;
+        }
+
+        .garage-content {
+            padding: 2rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .garage-image img {
+            transition: none;
+        }
+    }
+</style>

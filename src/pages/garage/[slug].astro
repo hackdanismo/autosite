@@ -1,0 +1,120 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+    const cars = await getCollection('garage');
+
+    return cars.map((car) => ({
+        params: { slug: car.id },
+        props: { car },
+    }));
+}
+
+const { car } = Astro.props;
+const { Content } = await render(car);
+
+const specifications = [
+    { label: 'Manufacturer', value: car.data.manufacturer },
+    { label: 'Model', value: car.data.model },
+    { label: 'Year', value: car.data.year },
+    { label: 'Generation', value: car.data.generation },
+    { label: 'Engine', value: car.data.engine },
+    { label: 'Power', value: car.data.power },
+    { label: 'Transmission', value: car.data.transmission },
+    { label: 'Drivetrain', value: car.data.drivetrain },
+].filter((spec) => spec.value != null);
+---
+
+<Layout>
+    <article class="car-page">
+
+        <header class="car-header">
+            <span>Garage</span>
+
+            <h1>{car.data.title}</h1>
+
+            <p>{car.data.description}</p>
+        </header>
+
+        <img
+            class="car-hero"
+            src={car.data.heroImage}
+            alt={car.data.title}
+        />
+
+        <section class="specifications">
+            <h2>Specifications</h2>
+
+            <dl class="spec-grid">
+                {specifications.map((spec) => (
+                    <div class="spec">
+                        <dt>{spec.label}</dt>
+                        <dd>{spec.value}</dd>
+                    </div>
+                ))}
+            </dl>
+        </section>
+
+        <div class="car-content">
+            <Content />
+        </div>
+
+    </article>
+</Layout>
+
+<style>
+    .car-header {
+        margin-block: 3rem;
+    }
+
+    .car-header h1 {
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        line-height: 1.1;
+    }
+
+    .car-hero {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        display: block;
+    }
+
+    .specifications {
+        margin-block: 3rem;
+    }
+
+    .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+
+    .spec {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 1rem;
+    }
+
+    dt {
+        font-size: 0.875rem;
+        color: #777;
+    }
+
+    dd {
+        margin: 0.5rem 0 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .car-content {
+        max-width: 800px;
+        margin: 3rem auto;
+        line-height: 1.8;
+    }
+
+    @media (max-width: 768px) {
+        .spec-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>

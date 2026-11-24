@@ -1,0 +1,207 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const cars = (await getCollection('garage'))
+    .sort((a, b) =>
+        b.data.publishDate.getTime() -
+        a.data.publishDate.getTime()
+    );
+---
+
+<Layout>
+    <section class="garage">
+
+        <header class="garage-header">
+            <span class="eyebrow">The collection</span>
+
+            <h1>Garage</h1>
+
+            <p>
+                Explore the cars in our garage, discover their stories,
+                specifications and ownership experiences.
+            </p>
+        </header>
+
+        <div class="garage-grid">
+            {cars.map((car) => (
+                <a href={`/garage/${car.id}/`} class="car-card">
+
+                    <div class="car-image">
+                        <img
+                            src={car.data.heroImage}
+                            alt={car.data.title}
+                            loading="lazy"
+                        />
+
+                        {car.data.featured && (
+                            <span class="featured-label">
+                                Featured
+                            </span>
+                        )}
+                    </div>
+
+                    <div class="car-content">
+
+                        <span class="car-details">
+                            {car.data.year}
+                            {car.data.generation && (
+                                <> &middot; {car.data.generation} Generation</>
+                            )}
+                        </span>
+
+                        <h2>{car.data.title}</h2>
+
+                        <p>{car.data.description}</p>
+
+                        <span class="car-link">
+                            Explore the car &rarr;
+                        </span>
+
+                    </div>
+                </a>
+            ))}
+        </div>
+
+        {cars.length === 0 && (
+            <p>There are currently no cars in the garage.</p>
+        )}
+
+    </section>
+</Layout>
+
+<style>
+    .garage {
+        max-width: 1440px;
+        margin-inline: auto;
+        padding: clamp(1.5rem, 4vw, 4rem);
+    }
+
+    .garage-header {
+        max-width: 800px;
+        margin-bottom: 3rem;
+    }
+
+    .eyebrow {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .garage-header h1 {
+        font-size: clamp(3rem, 7vw, 5rem);
+        line-height: 1.1;
+        margin: 1rem 0;
+    }
+
+    .garage-header p {
+        font-size: 1.125rem;
+        line-height: 1.7;
+    }
+
+    .garage-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2rem;
+    }
+
+    .car-card {
+        display: flex;
+        flex-direction: column;
+        background: #171717;
+        color: white;
+        text-decoration: none;
+        overflow: hidden;
+    }
+
+    .car-image {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+    }
+
+    .car-image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .featured-label {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        padding: 0.5rem 0.75rem;
+        background: white;
+        color: #171717;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .car-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex: 1;
+        padding: 1.75rem;
+    }
+
+    .car-details {
+        font-size: 0.875rem;
+        color: #bcbcbc;
+    }
+
+    .car-content h2 {
+        font-size: clamp(1.5rem, 2.5vw, 2rem);
+        line-height: 1.2;
+        margin: 0.75rem 0;
+    }
+
+    .car-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0 0 1.5rem;
+        color: #ddd;
+    }
+
+    .car-link {
+        margin-top: auto;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid white;
+        font-weight: 600;
+    }
+
+    .car-card:hover .car-image img {
+        transform: scale(1.05);
+    }
+
+    .car-card:hover .car-link {
+        border-color: transparent;
+    }
+
+    .car-card:focus-visible {
+        outline: 3px solid #888;
+        outline-offset: 4px;
+    }
+
+    @media (max-width: 1024px) {
+        .garage-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .garage-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .car-image img {
+            transition: none;
+        }
+    }
+</style>
