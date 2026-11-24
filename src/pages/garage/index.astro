@@ -3,6 +3,8 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
+const PAGE_SIZE = 10;
+
 const cars = (await getCollection('garage'))
     .sort((a, b) =>
         b.data.publishDate.getTime() -
@@ -12,12 +14,37 @@ const cars = (await getCollection('garage'))
 const featuredCar = cars.find(
     (car) => car.data.featured === true
 );
+
+// Prepare the data required for searching and loading cars.
+const garageCars = cars.map((car) => ({
+    id: car.id,
+    title: car.data.title,
+    manufacturer: 'manufacturer' in car.data
+        ? String(car.data.manufacturer ?? '')
+        : '',
+    model: 'model' in car.data
+        ? String(car.data.model ?? '')
+        : '',
+    year: car.data.year,
+    generation: car.data.generation ?? '',
+    description: car.data.description,
+    heroImage: car.data.heroImage,
+    featured: car.id === featuredCar?.id
+}));
+
+const initialCars = garageCars.slice(0, PAGE_SIZE);
 ---
 
 <Layout>
-    <section class="garage">
+    <section
+        class="garage"
+        id="garage"
+        data-cars={JSON.stringify(garageCars)}
+        data-page-size={PAGE_SIZE}
+    >
 
         <header class="garage-header">
+
             <span class="eyebrow">The collection</span>
 
             <h1>Garage</h1>
@@ -26,60 +53,537 @@ const featuredCar = cars.find(
                 Explore the cars in our garage, discover their stories,
                 specifications and ownership experiences.
             </p>
+
         </header>
 
-        <div class="garage-grid">
-            {cars.map((car) => (
+        {cars.length > 0 && (
+            <div class="garage-toolbar">
+
+                <div class="garage-search">
+
+                    <label for="garage-search-input">
+                        Search the garage
+                    </label>
+
+                    <div class="search-field">
+
+                        <svg
+                            class="search-icon"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+
+                        <input
+                            id="garage-search-input"
+                            type="search"
+                            placeholder="Search manufacturer or model..."
+                            autocomplete="off"
+                            aria-controls="garage-grid"
+                        />
+
+                        <button
+                            id="garage-clear-search"
+                            class="clear-search"
+                            type="button"
+                            aria-label="Clear search"
+                            hidden
+                        >
+                            &times;
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <p
+                    id="garage-results"
+                    class="garage-results"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    Showing {initialCars.length} of {cars.length}
+                    {cars.length === 1 ? ' car' : ' cars'}
+                </p>
+
+            </div>
+        )}
+
+        <div class="garage-grid" id="garage-grid">
+
+            {initialCars.map((car) => (
                 <a href={`/garage/${car.id}/`} class="car-card">
 
                     <div class="car-image">
+
                         <img
-                            src={car.data.heroImage}
-                            alt={car.data.title}
+                            src={car.heroImage}
+                            alt={car.title}
                             loading="lazy"
+                            decoding="async"
                         />
 
-                        {car.id === featuredCar?.id && (
+                        {car.featured && (
                             <span class="featured-label">
                                 Featured
                             </span>
                         )}
+
                     </div>
 
                     <div class="car-content">
 
                         <span class="car-details">
-                            {car.data.year}
-                            {car.data.generation && (
-                                <> &middot; {car.data.generation} Generation</>
+                            {car.year}
+                            {car.generation && (
+                                <> &middot; {car.generation} Generation</>
                             )}
                         </span>
 
-                        <h2>{car.data.title}</h2>
+                        <h2>{car.title}</h2>
 
-                        <p>{car.data.description}</p>
+                        <p>{car.description}</p>
 
                         <span class="car-link">
                             Explore the car &rarr;
                         </span>
 
                     </div>
+
                 </a>
             ))}
+
         </div>
 
-        {cars.length === 0 && (
-            <p>There are currently no cars in the garage.</p>
-        )}
+        <div
+            id="garage-empty"
+            class="garage-empty"
+            hidden={cars.length > 0}
+        >
+            <h2>
+                {cars.length === 0
+                    ? 'The garage is empty'
+                    : 'No cars found'}
+            </h2>
+
+            <p>
+                {cars.length === 0
+                    ? 'There are currently no cars in the garage.'
+                    : 'Try searching for a different manufacturer or model.'}
+            </p>
+        </div>
+
+        <div
+            id="garage-load-more"
+            class="garage-load-more"
+            hidden={cars.length <= PAGE_SIZE}
+        >
+            <button
+                id="garage-load-more-button"
+                class="load-more-button"
+                type="button"
+                aria-controls="garage-grid"
+            >
+                Load more cars
+
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M12 5v14" />
+                    <path d="m19 12-7 7-7-7" />
+                </svg>
+            </button>
+
+            <span
+                id="garage-remaining"
+                class="garage-remaining"
+            >
+                {Math.max(0, cars.length - PAGE_SIZE)}
+                more cars to explore
+            </span>
+
+        </div>
+
+        <!--
+            Reusable template for cars added through
+            searching or the Load more button.
+        -->
+        <template id="garage-card-template">
+
+            <a class="car-card">
+
+                <div class="car-image">
+
+                    <img
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                    />
+
+                    <span class="featured-label" hidden>
+                        Featured
+                    </span>
+
+                </div>
+
+                <div class="car-content">
+
+                    <span class="car-details"></span>
+
+                    <h2></h2>
+
+                    <p></p>
+
+                    <span class="car-link">
+                        Explore the car &rarr;
+                    </span>
+
+                </div>
+
+            </a>
+
+        </template>
+
+        <noscript>
+            <p>
+                Enable JavaScript to search the garage
+                and load additional cars.
+            </p>
+        </noscript>
 
     </section>
 </Layout>
+
+<script>
+    interface GarageCar {
+        id: string;
+        title: string;
+        manufacturer: string;
+        model: string;
+        year: string | number;
+        generation: string | number;
+        description: string;
+        heroImage: string;
+        featured: boolean;
+    }
+
+    function initialiseGarage() {
+
+        const garage = document.querySelector<HTMLElement>(
+            '#garage'
+        );
+
+        if (!garage || garage.dataset.initialised === 'true') {
+            return;
+        }
+
+        const grid = garage.querySelector<HTMLElement>(
+            '#garage-grid'
+        );
+
+        const searchInput = garage.querySelector<HTMLInputElement>(
+            '#garage-search-input'
+        );
+
+        const clearSearchButton = garage.querySelector<HTMLButtonElement>(
+            '#garage-clear-search'
+        );
+
+        const results = garage.querySelector<HTMLElement>(
+            '#garage-results'
+        );
+
+        const emptyState = garage.querySelector<HTMLElement>(
+            '#garage-empty'
+        );
+
+        const loadMore = garage.querySelector<HTMLElement>(
+            '#garage-load-more'
+        );
+
+        const loadMoreButton = garage.querySelector<HTMLButtonElement>(
+            '#garage-load-more-button'
+        );
+
+        const remaining = garage.querySelector<HTMLElement>(
+            '#garage-remaining'
+        );
+
+        const template = garage.querySelector<HTMLTemplateElement>(
+            '#garage-card-template'
+        );
+
+        if (
+            !grid ||
+            !searchInput ||
+            !clearSearchButton ||
+            !results ||
+            !emptyState ||
+            !loadMore ||
+            !loadMoreButton ||
+            !remaining ||
+            !template
+        ) {
+            return;
+        }
+
+        garage.dataset.initialised = 'true';
+
+        const cars: GarageCar[] = JSON.parse(
+            garage.dataset.cars || '[]'
+        );
+
+        const pageSize = Number(
+            garage.dataset.pageSize || 10
+        );
+
+        let filteredCars = [...cars];
+
+        let visibleCount = Math.min(
+            pageSize,
+            filteredCars.length
+        );
+
+        // Normalise search terms for case-insensitive matching.
+        function normalise(value: string): string {
+            return value
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        // Create a new card using the existing Astro template.
+        function createCarCard(car: GarageCar): DocumentFragment {
+
+            const fragment = template!.content.cloneNode(
+                true
+            ) as DocumentFragment;
+
+            const card = fragment.querySelector<HTMLAnchorElement>(
+                '.car-card'
+            );
+
+            const image = fragment.querySelector<HTMLImageElement>(
+                '.car-image img'
+            );
+
+            const featured = fragment.querySelector<HTMLElement>(
+                '.featured-label'
+            );
+
+            const details = fragment.querySelector<HTMLElement>(
+                '.car-details'
+            );
+
+            const title = fragment.querySelector<HTMLElement>(
+                '.car-content h2'
+            );
+
+            const description = fragment.querySelector<HTMLElement>(
+                '.car-content p'
+            );
+
+            if (card) {
+                card.href = `/garage/${car.id}/`;
+            }
+
+            if (image) {
+                image.src = car.heroImage;
+                image.alt = car.title;
+            }
+
+            if (featured) {
+                featured.hidden = !car.featured;
+            }
+
+            if (details) {
+                details.textContent = car.generation
+                    ? `${car.year} · ${car.generation} Generation`
+                    : String(car.year);
+            }
+
+            if (title) {
+                title.textContent = car.title;
+            }
+
+            if (description) {
+                description.textContent = car.description;
+            }
+
+            return fragment;
+        }
+
+        // Update the results counter and button visibility.
+        function updateInterface() {
+
+            const total = filteredCars.length;
+
+            const carsRemaining = Math.max(
+                0,
+                total - visibleCount
+            );
+
+            results!.textContent =
+                `Showing ${visibleCount} of ${total} ${
+                    total === 1 ? 'car' : 'cars'
+                }`;
+
+            emptyState!.hidden = total !== 0;
+
+            loadMore!.hidden = carsRemaining === 0;
+
+            remaining!.textContent =
+                `${carsRemaining} more ${
+                    carsRemaining === 1 ? 'car' : 'cars'
+                } to explore`;
+
+            clearSearchButton!.hidden =
+                searchInput!.value.length === 0;
+        }
+
+        // Replace the currently displayed cards.
+        function renderCars() {
+
+            const fragment = document.createDocumentFragment();
+
+            const visibleCars = filteredCars.slice(
+                0,
+                visibleCount
+            );
+
+            visibleCars.forEach((car) => {
+                fragment.appendChild(createCarCard(car));
+            });
+
+            grid!.replaceChildren(fragment);
+
+            updateInterface();
+        }
+
+        // Search the entire Garage collection.
+        function searchCars() {
+
+            const query = normalise(searchInput!.value);
+
+            const searchTerms = query
+                .split(/\s+/)
+                .filter(Boolean);
+
+            filteredCars = cars.filter((car) => {
+
+                const searchableText = normalise(
+                    [
+                        car.manufacturer,
+                        car.model,
+                        car.title
+                    ].join(' ')
+                );
+
+                return searchTerms.every((term) =>
+                    searchableText.includes(term)
+                );
+
+            });
+
+            // Reset to the first batch whenever a search changes.
+            visibleCount = Math.min(
+                pageSize,
+                filteredCars.length
+            );
+
+            renderCars();
+        }
+
+        // Append the next batch without rebuilding existing cards.
+        function loadNextBatch() {
+
+            const nextCars = filteredCars.slice(
+                visibleCount,
+                visibleCount + pageSize
+            );
+
+            const fragment = document.createDocumentFragment();
+
+            nextCars.forEach((car) => {
+                fragment.appendChild(createCarCard(car));
+            });
+
+            grid!.appendChild(fragment);
+
+            visibleCount += nextCars.length;
+
+            updateInterface();
+        }
+
+        // Live search as the visitor types.
+        searchInput.addEventListener(
+            'input',
+            searchCars
+        );
+
+        // Clear the search and restore the original collection.
+        clearSearchButton.addEventListener('click', () => {
+
+            searchInput.value = '';
+
+            searchCars();
+
+            searchInput.focus();
+
+        });
+
+        // Load the next batch of cars.
+        loadMoreButton.addEventListener(
+            'click',
+            loadNextBatch
+        );
+
+        // Initialise the counters and restore any existing query.
+        if (searchInput.value) {
+            searchCars();
+        } else {
+            updateInterface();
+        }
+    }
+
+    initialiseGarage();
+
+    // Support Astro client-side navigation.
+    document.addEventListener(
+        'astro:page-load',
+        initialiseGarage
+    );
+</script>
 
 <style>
     .garage {
         max-width: 1440px;
         margin-inline: auto;
         padding: clamp(1.5rem, 4vw, 4rem);
+    }
+
+    .garage [hidden] {
+        display: none !important;
     }
 
     .garage-header {
@@ -103,6 +607,107 @@ const featuredCar = cars.find(
         font-size: 1.125rem;
         line-height: 1.7;
     }
+
+    /* Garage search and results */
+
+    .garage-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .garage-search {
+        width: 100%;
+        max-width: 480px;
+    }
+
+    .garage-search label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .search-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        pointer-events: none;
+        opacity: 0.65;
+    }
+
+    .search-field input {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 54px;
+        padding: 1rem 3rem;
+        background: transparent;
+        border: 1px solid #888;
+        border-radius: 0;
+        color: inherit;
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+
+    .search-field input::placeholder {
+        color: inherit;
+        opacity: 0.55;
+    }
+
+    .search-field input:focus {
+        border-color: currentColor;
+        outline: 1px solid currentColor;
+    }
+
+    .search-field input::-webkit-search-cancel-button {
+        display: none;
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .clear-search:hover {
+        opacity: 0.6;
+    }
+
+    .clear-search:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+
+    .garage-results {
+        margin: 0;
+        padding-bottom: 1rem;
+        font-size: 0.875rem;
+        opacity: 0.7;
+    }
+
+    /* Garage grid */
 
     .garage-grid {
         display: grid;
@@ -192,6 +797,75 @@ const featuredCar = cars.find(
         outline-offset: 4px;
     }
 
+    /* Empty search results */
+
+    .garage-empty {
+        padding: 4rem 1.5rem;
+        text-align: center;
+        border: 1px solid #888;
+    }
+
+    .garage-empty h2 {
+        margin: 0 0 1rem;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    .garage-empty p {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+        opacity: 0.7;
+    }
+
+    /* Load more */
+
+    .garage-load-more {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 3rem;
+    }
+
+    .load-more-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        min-width: 220px;
+        padding: 1rem 2rem;
+        background: #171717;
+        color: white;
+        border: 1px solid #171717;
+        border-radius: 0;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .load-more-button:hover {
+        background: transparent;
+        color: inherit;
+        border-color: currentColor;
+    }
+
+    .load-more-button:focus-visible {
+        outline: 3px solid #888;
+        outline-offset: 4px;
+    }
+
+    .garage-remaining {
+        font-size: 0.875rem;
+        opacity: 0.65;
+    }
+
+    /* Responsive layout */
+
     @media (max-width: 1024px) {
         .garage-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -202,11 +876,39 @@ const featuredCar = cars.find(
         .garage-grid {
             grid-template-columns: 1fr;
         }
+
+        .garage-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .garage-search {
+            max-width: none;
+        }
+
+        .garage-results {
+            padding-bottom: 0;
+        }
+
+        .garage-load-more {
+            margin-top: 2rem;
+        }
+
+        .load-more-button {
+            width: 100%;
+        }
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .car-image img {
+        .car-image img,
+        .search-field input,
+        .load-more-button {
             transition: none;
+        }
+
+        .car-card:hover .car-image img {
+            transform: none;
         }
     }
 </style>
