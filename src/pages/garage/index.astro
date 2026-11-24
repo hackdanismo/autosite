@@ -1,3 +1,4 @@
+
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
@@ -7,6 +8,10 @@ const cars = (await getCollection('garage'))
         b.data.publishDate.getTime() -
         a.data.publishDate.getTime()
     );
+
+const featuredCar = cars.find(
+    (car) => car.data.featured === true
+);
 ---
 
 <Layout>
@@ -34,7 +39,7 @@ const cars = (await getCollection('garage'))
                             loading="lazy"
                         />
 
-                        {car.data.featured && (
+                        {car.id === featuredCar?.id && (
                             <span class="featured-label">
                                 Featured
                             </span>
