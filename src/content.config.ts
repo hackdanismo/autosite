@@ -12,6 +12,8 @@ const news = defineCollection({
         description: z.string(),
         publishDate: z.coerce.date(),
         author: z.string().optional(),
+        featured: z.boolean().default(false),
+        heroImage: z.string().optional(),
     }),
 });
 
