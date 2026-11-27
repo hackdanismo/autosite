@@ -1,0 +1,1085 @@
+
+---
+import Layout from '../../layouts/Layout.astro';
+import { events } from '../../content/events/events';
+
+const sortedEvents = [...events].sort((a, b) =>
+    a.startDate.localeCompare(b.startDate)
+);
+
+const currentYear = new Date().getFullYear();
+
+const years = [...new Set([
+    currentYear,
+    currentYear + 1,
+    ...sortedEvents.map(event =>
+        Number(event.startDate.slice(0, 4))
+    ),
+])].sort((a, b) => a - b);
+
+const categories = [...new Set(
+    sortedEvents.map(event => event.category)
+)].sort();
+
+const months = [...new Set(
+    sortedEvents.map(event => event.startDate.slice(0, 7))
+)];
+
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+});
+
+const monthFormatter = new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+});
+
+const shortMonthFormatter = new Intl.DateTimeFormat('en-GB', {
+    month: 'short',
+});
+
+const parseDate = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+};
+
+const formatEventDates = (
+    startDate: string,
+    endDate: string
+) => {
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+
+    return startDate === endDate
+        ? dateFormatter.format(start)
+        : dateFormatter.formatRange(start, end);
+};
+---
+
+<Layout>
+    <div class="events-page">
+
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/">Home</a>
+
+            <span aria-hidden="true">/</span>
+
+            <span aria-current="page">Events</span>
+        </nav>
+
+        <automotive-events-directory>
+
+            <!-- Page heading -->
+            <header class="page-header">
+                <div class="page-heading">
+                    <span class="eyebrow">
+                        The automotive calendar
+                    </span>
+
+                    <h1>
+                        Motoring Events
+                        <span data-selected-year>{currentYear}</span>
+                    </h1>
+
+                    <p>
+                        Your guide to the year's biggest motor shows,
+                        automotive festivals, car meets and motorsport
+                        events. Discover what's on and plan your next
+                        automotive adventure.
+                    </p>
+                </div>
+
+                <svg
+                    class="header-icon"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.25"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                    <path d="M16 3v4M8 3v4M3 10h18" />
+                    <path d="M8 14h2M14 14h2M8 18h2M14 18h2" />
+                </svg>
+            </header>
+
+            <!-- Filters -->
+            <div class="event-filters">
+
+                <!-- Search -->
+                <div class="filter-field search-field">
+                    <label for="event-search">
+                        Search events
+                    </label>
+
+                    <input
+                        id="event-search"
+                        type="search"
+                        placeholder="Search events or locations..."
+                        data-search
+                    />
+                </div>
+
+                <!-- Year selection -->
+                <div class="filter-field">
+                    <label for="event-year">
+                        Year
+                    </label>
+
+                    <select id="event-year" data-year>
+                        {years.map(year => (
+                            <option
+                                value={year}
+                                selected={year === currentYear}
+                            >
+                                {year}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <!-- Category selection -->
+                <div class="filter-field">
+                    <label for="event-category">
+                        Category
+                    </label>
+
+                    <select id="event-category" data-category>
+                        <option value="all">
+                            All categories
+                        </option>
+
+                        {categories.map(category => (
+                            <option value={category}>
+                                {category}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results toolbar -->
+            <div class="results-toolbar">
+                <p data-event-count aria-live="polite">
+                    {sortedEvents.length} events
+                </p>
+
+                <label class="past-events-toggle">
+                    <input type="checkbox" data-show-past />
+
+                    Show past events
+                </label>
+            </div>
+
+            <!-- Annual events directory -->
+            <div class="event-directory">
+                {months.map(month => {
+                    const monthEvents = sortedEvents.filter(event =>
+                        event.startDate.startsWith(month)
+                    );
+
+                    return (
+                        <section
+                            class="month-group"
+                            data-month-group
+                        >
+                            <!-- Month heading -->
+                            <div class="month-heading">
+                                <h2>
+                                    {monthFormatter.format(
+                                        parseDate(`${month}-01`)
+                                    )}
+                                </h2>
+
+                                <span class="month-line"></span>
+                            </div>
+
+                            <!-- Events within this month -->
+                            {monthEvents.map(event => {
+                                const start = parseDate(event.startDate);
+
+                                return (
+                                    <article
+                                        class="directory-event"
+                                        data-event
+                                        data-start={event.startDate}
+                                        data-end={event.endDate}
+                                        data-category-value={event.category}
+                                        data-search-value={[
+                                            event.title,
+                                            event.location,
+                                            event.category,
+                                            event.description,
+                                        ].join(' ').toLowerCase()}
+                                    >
+                                        <!-- Date badge -->
+                                        <div class="event-date-badge">
+                                            <span class="badge-month">
+                                                {shortMonthFormatter.format(start)}
+                                            </span>
+
+                                            <span class="badge-day">
+                                                {String(start.getDate()).padStart(2, '0')}
+                                            </span>
+                                        </div>
+
+                                        <!-- Event information -->
+                                        <div class="event-information">
+                                            <span class="event-category">
+                                                {event.category}
+                                            </span>
+
+                                            <h3>{event.title}</h3>
+
+                                            <div class="event-meta">
+
+                                                <!-- Event date -->
+                                                <span>
+                                                    <svg
+                                                        width="16"
+                                                        height="16"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="1.5"
+                                                        stroke-linecap="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <rect
+                                                            x="3"
+                                                            y="5"
+                                                            width="18"
+                                                            height="16"
+                                                            rx="2"
+                                                        />
+                                                        <path d="M16 3v4M8 3v4M3 10h18" />
+                                                    </svg>
+
+                                                    {formatEventDates(
+                                                        event.startDate,
+                                                        event.endDate
+                                                    )}
+                                                </span>
+
+                                                <!-- Event location -->
+                                                <span>
+                                                    <svg
+                                                        width="16"
+                                                        height="16"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="1.5"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                                                        <circle cx="12" cy="10" r="3" />
+                                                    </svg>
+
+                                                    {event.location}
+                                                </span>
+                                            </div>
+
+                                            <p class="event-description">
+                                                {event.description}
+                                            </p>
+                                        </div>
+
+                                        <!-- Event website CTA -->
+                                        <div class="event-actions">
+                                            <a
+                                                href={event.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="event-button"
+                                                aria-label={`${event.title} official website (opens in a new tab)`}
+                                            >
+                                                Event website
+
+                                                <svg
+                                                    width="16"
+                                                    height="16"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    aria-hidden="true"
+                                                >
+                                                    <path d="M7 17 17 7M7 7h10v10" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </section>
+                    );
+                })}
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state" data-empty-state hidden>
+                <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.25"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                    <path d="M16 3v4M8 3v4M3 10h18" />
+                    <path d="m9 14 6 5m0-5-6 5" />
+                </svg>
+
+                <h2>No events found</h2>
+
+                <p>
+                    Try selecting another year, changing the category
+                    or adjusting your search.
+                </p>
+
+                <button type="button" data-reset-filters>
+                    Reset filters
+                </button>
+            </div>
+
+            <noscript>
+                <p>
+                    Enable JavaScript to filter events.
+                    All stored events are displayed above.
+                </p>
+            </noscript>
+        </automotive-events-directory>
+
+        <!-- Event disclaimer -->
+        <footer class="events-disclaimer">
+            <p>
+                Event dates and locations are subject to change.
+                Please check the official event website before
+                travelling or purchasing tickets.
+            </p>
+        </footer>
+    </div>
+</Layout>
+
+<script>
+    class AutomotiveEventsDirectory extends HTMLElement {
+        private initialised = false;
+
+        connectedCallback() {
+            if (this.initialised) return;
+            this.initialised = true;
+
+            const yearSelect =
+                this.querySelector<HTMLSelectElement>('[data-year]')!;
+
+            const categorySelect =
+                this.querySelector<HTMLSelectElement>(
+                    '[data-category]'
+                )!;
+
+            const searchInput =
+                this.querySelector<HTMLInputElement>('[data-search]')!;
+
+            const showPastInput =
+                this.querySelector<HTMLInputElement>('[data-show-past]')!;
+
+            const eventCount =
+                this.querySelector<HTMLElement>('[data-event-count]')!;
+
+            const emptyState =
+                this.querySelector<HTMLElement>('[data-empty-state]')!;
+
+            const resetButton =
+                this.querySelector<HTMLButtonElement>(
+                    '[data-reset-filters]'
+                )!;
+
+            const selectedYearHeading =
+                this.querySelector<HTMLElement>(
+                    '[data-selected-year]'
+                )!;
+
+            const eventCards = Array.from(
+                this.querySelectorAll<HTMLElement>('[data-event]')
+            );
+
+            const monthGroups = Array.from(
+                this.querySelectorAll<HTMLElement>(
+                    '[data-month-group]'
+                )
+            );
+
+            const today = new Date();
+
+            const currentYear = today.getFullYear();
+
+            const todayKey = [
+                currentYear,
+                String(today.getMonth() + 1).padStart(2, '0'),
+                String(today.getDate()).padStart(2, '0'),
+            ].join('-');
+
+            // Ensure the current year and next year are available,
+            // even when the site was built in a previous year.
+            const availableYears = new Set(
+                Array.from(yearSelect.options).map(option =>
+                    Number(option.value)
+                )
+            );
+
+            availableYears.add(currentYear);
+            availableYears.add(currentYear + 1);
+
+            yearSelect.replaceChildren();
+
+            [...availableYears]
+                .sort((a, b) => a - b)
+                .forEach(year => {
+                    const option = document.createElement('option');
+
+                    option.value = String(year);
+                    option.textContent = String(year);
+
+                    yearSelect.append(option);
+                });
+
+            /**
+             * Choose the year containing the next upcoming event.
+             */
+            const nextEvent = eventCards.find(card =>
+                (card.dataset.end || '') >= todayKey
+            );
+
+            const defaultYear = nextEvent
+                ? nextEvent.dataset.start!.slice(0, 4)
+                : String(currentYear);
+
+            yearSelect.value = defaultYear;
+
+            /**
+             * Support direct links such as:
+             * /events/?year=2027
+             */
+            const params = new URLSearchParams(
+                window.location.search
+            );
+
+            const requestedYear = params.get('year');
+
+            if (
+                requestedYear &&
+                Array.from(yearSelect.options).some(
+                    option => option.value === requestedYear
+                )
+            ) {
+                yearSelect.value = requestedYear;
+            }
+
+            /**
+             * Filter events by year, category, search and date.
+             */
+            const filterEvents = () => {
+                const year = yearSelect.value;
+                const category = categorySelect.value;
+
+                const search = searchInput.value
+                    .trim()
+                    .toLowerCase();
+
+                const showPast = showPastInput.checked;
+
+                let visibleCount = 0;
+
+                eventCards.forEach(card => {
+                    const start = card.dataset.start || '';
+                    const end = card.dataset.end || '';
+
+                    const matchesYear =
+                        start.slice(0, 4) === year;
+
+                    const matchesCategory =
+                        category === 'all' ||
+                        card.dataset.categoryValue === category;
+
+                    const matchesSearch =
+                        (card.dataset.searchValue || '')
+                            .includes(search);
+
+                    const matchesDate =
+                        showPast || end >= todayKey;
+
+                    const visible =
+                        matchesYear &&
+                        matchesCategory &&
+                        matchesSearch &&
+                        matchesDate;
+
+                    card.hidden = !visible;
+
+                    if (visible) {
+                        visibleCount++;
+                    }
+                });
+
+                // Hide months that contain no matching events.
+                monthGroups.forEach(group => {
+                    const visibleEvents = group.querySelector(
+                        '[data-event]:not([hidden])'
+                    );
+
+                    group.hidden = !visibleEvents;
+                });
+
+                eventCount.textContent =
+                    `${visibleCount} ${
+                        visibleCount === 1 ? 'event' : 'events'
+                    } found`;
+
+                emptyState.hidden = visibleCount !== 0;
+
+                selectedYearHeading.textContent = year;
+            };
+
+            /**
+             * Update the URL when the selected year changes.
+             */
+            const updateYearUrl = () => {
+                const url = new URL(window.location.href);
+
+                url.searchParams.set('year', yearSelect.value);
+
+                window.history.replaceState(
+                    window.history.state,
+                    '',
+                    url.toString()
+                );
+            };
+
+            yearSelect.addEventListener('change', () => {
+                // Automatically include completed events
+                // when viewing a previous year.
+                showPastInput.checked =
+                    Number(yearSelect.value) < currentYear;
+
+                filterEvents();
+                updateYearUrl();
+            });
+
+            categorySelect.addEventListener(
+                'change',
+                filterEvents
+            );
+
+            searchInput.addEventListener(
+                'input',
+                filterEvents
+            );
+
+            showPastInput.addEventListener(
+                'change',
+                filterEvents
+            );
+
+            resetButton.addEventListener('click', () => {
+                yearSelect.value = defaultYear;
+                categorySelect.value = 'all';
+                searchInput.value = '';
+                showPastInput.checked = false;
+
+                filterEvents();
+                updateYearUrl();
+
+                searchInput.focus();
+            });
+
+            showPastInput.checked =
+                Number(yearSelect.value) < currentYear;
+
+            // Initial render.
+            filterEvents();
+        }
+    }
+
+    if (!customElements.get('automotive-events-directory')) {
+        customElements.define(
+            'automotive-events-directory',
+            AutomotiveEventsDirectory
+        );
+    }
+</script>
+
+<style>
+    .events-page {
+        --events-accent: #dc2626;
+        --events-on-accent: #ffffff;
+        --events-surface: #ffffff;
+        --events-background: #f5f5f5;
+        --events-text: #171717;
+        --events-muted: #737373;
+        --events-border: #e5e5e5;
+
+        max-width: 1280px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+        box-sizing: border-box;
+        color: var(--events-text);
+    }
+
+    automotive-events-directory {
+        display: block;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    /* Breadcrumbs */
+
+    .breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+    }
+
+    .breadcrumbs a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .breadcrumbs a:hover {
+        color: var(--events-accent);
+    }
+
+    /* Page heading */
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .page-heading {
+        flex: 1;
+    }
+
+    .header-icon {
+        flex-shrink: 0;
+        color: var(--events-accent);
+    }
+
+    .eyebrow {
+        display: block;
+        margin-bottom: 0.75rem;
+        color: var(--events-accent);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: clamp(2.25rem, 5vw, 3.75rem);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+    }
+
+    .page-header p {
+        max-width: 700px;
+        margin: 1rem 0 0;
+        color: var(--events-muted);
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    /* Event filters */
+
+    .event-filters {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--events-border);
+        border-radius: 12px;
+        background: var(--events-surface);
+    }
+
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .filter-field label {
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .filter-field input,
+    .filter-field select {
+        width: 100%;
+        min-height: 44px;
+        padding: 0.75rem;
+        border: 1px solid var(--events-border);
+        border-radius: 7px;
+        box-sizing: border-box;
+        background: var(--events-background);
+        color: var(--events-text);
+        font: inherit;
+        font-size: 0.85rem;
+    }
+
+    .filter-field input::placeholder {
+        color: var(--events-muted);
+    }
+
+    /* Results toolbar */
+
+    .results-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .results-toolbar p {
+        margin: 0;
+        color: var(--events-muted);
+        font-size: 0.85rem;
+    }
+
+    .past-events-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .past-events-toggle input {
+        accent-color: var(--events-accent);
+    }
+
+    /* Month groups */
+
+    .month-group {
+        margin-bottom: 2.5rem;
+    }
+
+    .month-heading {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin: 2rem 0 1rem;
+    }
+
+    .month-heading h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+    }
+
+    .month-line {
+        flex: 1;
+        height: 1px;
+        background: var(--events-border);
+    }
+
+    /* Event cards */
+
+    .directory-event {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: var(--events-surface);
+        border: 1px solid var(--events-border);
+        border-radius: 12px;
+        transition: border-color 0.2s ease;
+    }
+
+    .directory-event:hover {
+        border-color: var(--events-accent);
+    }
+
+    /* Date badge */
+
+    .event-date-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 76px;
+        min-height: 84px;
+        border-radius: 8px;
+        background: var(--events-background);
+    }
+
+    .badge-month {
+        color: var(--events-accent);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .badge-day {
+        font-size: 2.25rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    /* Event information */
+
+    .event-information {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .event-category {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--events-accent);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .event-information h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.3rem;
+        font-weight: 750;
+        line-height: 1.3;
+    }
+
+    .event-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.25rem;
+    }
+
+    .event-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+    }
+
+    .event-meta svg {
+        flex-shrink: 0;
+    }
+
+    .event-description {
+        margin: 0.75rem 0 0;
+        color: var(--events-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    /* Event website button */
+
+    .event-actions {
+        align-self: center;
+        flex-shrink: 0;
+    }
+
+    .event-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--events-border);
+        border-radius: 7px;
+        color: var(--events-text);
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .event-button:hover {
+        background: var(--events-accent);
+        border-color: var(--events-accent);
+        color: var(--events-on-accent);
+    }
+
+    /* Empty state */
+
+    .empty-state {
+        padding: 4rem 1rem;
+        text-align: center;
+        border: 1px dashed var(--events-border);
+        border-radius: 12px;
+        color: var(--events-muted);
+    }
+
+    .empty-state h2 {
+        margin: 1rem 0 0.5rem;
+        font-size: 1.25rem;
+        color: var(--events-text);
+    }
+
+    .empty-state p {
+        margin: 0 0 1.5rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .empty-state button {
+        padding: 0.75rem 1.25rem;
+        border: 0;
+        border-radius: 7px;
+        background: var(--events-accent);
+        color: var(--events-on-accent);
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    /* Disclaimer */
+
+    .events-disclaimer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--events-border);
+    }
+
+    .events-disclaimer p {
+        margin: 0;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
+
+    /* Accessibility */
+
+    :is(a, button, input, select):focus-visible {
+        outline: 2px solid var(--events-accent);
+        outline-offset: 3px;
+    }
+
+    /* Mobile layout */
+
+    @media (max-width: 768px) {
+        .events-page {
+            padding-top: 1.5rem;
+        }
+
+        .page-header {
+            gap: 1rem;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .event-filters {
+            grid-template-columns: 1fr 1fr;
+            padding: 1rem;
+        }
+
+        .search-field {
+            grid-column: 1 / -1;
+        }
+
+        .directory-event {
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .event-date-badge {
+            width: 60px;
+            min-height: 72px;
+        }
+
+        .badge-day {
+            font-size: 1.75rem;
+        }
+
+        .event-information h3 {
+            font-size: 1.1rem;
+        }
+
+        .event-meta {
+            flex-direction: column;
+        }
+
+        .event-actions {
+            flex-basis: 100%;
+        }
+
+        .event-button {
+            display: flex;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .event-filters {
+            grid-template-columns: 1fr;
+        }
+
+        .header-icon {
+            display: none;
+        }
+    }
+
+    /* Dark mode */
+
+    @media (prefers-color-scheme: dark) {
+        .events-page {
+            --events-accent: #f87171;
+            --events-on-accent: #171717;
+            --events-surface: #171717;
+            --events-background: #262626;
+            --events-text: #f5f5f5;
+            --events-muted: #a3a3a3;
+            --events-border: #333333;
+
+            color-scheme: dark;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .directory-event,
+        .event-button {
+            transition: none;
+        }
+    }
+</style>
