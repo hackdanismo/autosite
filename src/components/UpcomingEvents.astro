@@ -1,0 +1,1113 @@
+
+---
+import { events } from '../content/events/events';
+
+const sortedEvents = [...events].sort((a, b) =>
+    a.startDate.localeCompare(b.startDate)
+);
+
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+});
+
+const monthFormatter = new Intl.DateTimeFormat('en-GB', {
+    month: 'short',
+});
+
+const parseDate = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+};
+
+const formatEventDates = (startDate: string, endDate: string) => {
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+
+    return startDate === endDate
+        ? dateFormatter.format(start)
+        : dateFormatter.formatRange(start, end);
+};
+---
+
+<section class="upcoming-events">
+    <!-- Section heading -->
+    <header class="events-header">
+        <div>
+            <span class="eyebrow">What's on</span>
+
+            <h2>Upcoming Events</h2>
+
+            <p>
+                Discover upcoming motor shows, festivals,
+                car meets and motorsport events.
+            </p>
+        </div>
+
+        <svg
+            class="header-icon"
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+        >
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+    </header>
+
+    <automotive-calendar>
+        <div class="events-layout">
+
+            <!-- Calendar panel -->
+            <div class="calendar-panel">
+                <div class="calendar-navigation">
+                    <button
+                        type="button"
+                        class="nav-button"
+                        data-action="previous"
+                        aria-label="Previous month"
+                    >
+                        &#8249;
+                    </button>
+
+                    <h3 data-month-label aria-live="polite"></h3>
+
+                    <button
+                        type="button"
+                        class="nav-button"
+                        data-action="next"
+                        aria-label="Next month"
+                    >
+                        &#8250;
+                    </button>
+                </div>
+
+                <!-- Days of the week -->
+                <div class="calendar-weekdays" aria-hidden="true">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+
+                <!-- Calendar dates -->
+                <div
+                    class="calendar-grid"
+                    data-calendar-grid
+                    role="group"
+                    aria-label="Calendar dates"
+                ></div>
+
+                <!-- Calendar footer -->
+                <div class="calendar-footer">
+                    <span class="calendar-legend">
+                        <span class="legend-dot"></span>
+                        Event scheduled
+                    </span>
+
+                    <button
+                        type="button"
+                        class="text-button"
+                        data-action="today"
+                    >
+                        Today
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upcoming events panel -->
+            <div class="events-panel">
+                <div class="events-list-header">
+                    <h3 data-list-heading>Coming up</h3>
+
+                    <button
+                        type="button"
+                        class="text-button"
+                        data-action="reset"
+                        hidden
+                    >
+                        All upcoming
+                    </button>
+                </div>
+
+                <div
+                    class="events-list"
+                    data-events-list
+                    aria-live="polite"
+                >
+                    {sortedEvents.map(event => {
+                        const start = parseDate(event.startDate);
+
+                        return (
+                            <article
+                                class="event-card"
+                                data-event
+                                data-start={event.startDate}
+                                data-end={event.endDate}
+                                data-title={event.title}
+                            >
+                                <!-- Event date badge -->
+                                <div class="event-date">
+                                    <span class="event-month">
+                                        {monthFormatter.format(start)}
+                                    </span>
+
+                                    <span class="event-day">
+                                        {String(start.getDate()).padStart(2, '0')}
+                                    </span>
+                                </div>
+
+                                <!-- Event information -->
+                                <div class="event-details">
+                                    <span class="event-category">
+                                        {event.category}
+                                    </span>
+
+                                    <h4 class="event-title">
+                                        {event.title}
+                                    </h4>
+
+                                    <p class="event-dates">
+                                        {formatEventDates(
+                                            event.startDate,
+                                            event.endDate
+                                        )}
+                                    </p>
+
+                                    <p class="event-location">
+                                        {event.location}
+                                    </p>
+
+                                    <p class="event-description">
+                                        {event.description}
+                                    </p>
+
+                                    <a
+                                        href={event.url}
+                                        class="event-link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={`${event.title} official website (opens in a new tab)`}
+                                    >
+                                        Event website ↗
+                                    </a>
+                                </div>
+                            </article>
+                        );
+                    })}
+
+                    <!-- Empty state -->
+                    <div class="empty-state" data-empty-state hidden>
+                        <h4>No events scheduled</h4>
+
+                        <p>
+                            Try another date or browse upcoming events.
+                        </p>
+                    </div>
+                </div>
+
+                <noscript>
+                    <p>
+                        Enable JavaScript to browse the calendar.
+                        All stored events are displayed above.
+                    </p>
+                </noscript>
+            </div>
+        </div>
+    </automotive-calendar>
+
+    <!-- Full events calendar CTA -->
+    <div class="events-cta">
+        <a href="/events/" class="events-cta-button">
+            View full events calendar
+
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+        </a>
+
+        <p>
+            Explore the automotive calendar for the year ahead.
+        </p>
+    </div>
+</section>
+
+<script>
+    class AutomotiveCalendar extends HTMLElement {
+        private initialised = false;
+
+        connectedCallback() {
+            if (this.initialised) return;
+            this.initialised = true;
+
+            const calendarGrid =
+                this.querySelector<HTMLElement>('[data-calendar-grid]')!;
+
+            const monthLabel =
+                this.querySelector<HTMLElement>('[data-month-label]')!;
+
+            const listHeading =
+                this.querySelector<HTMLElement>('[data-list-heading]')!;
+
+            const resetButton =
+                this.querySelector<HTMLButtonElement>(
+                    '[data-action="reset"]'
+                )!;
+
+            const emptyState =
+                this.querySelector<HTMLElement>('[data-empty-state]')!;
+
+            const eventCards = Array.from(
+                this.querySelectorAll<HTMLElement>('[data-event]')
+            );
+
+            const today = new Date();
+
+            let currentMonth = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+            );
+
+            let selectedDate: string | null = null;
+
+            let viewMode: 'upcoming' | 'month' | 'day' = 'upcoming';
+
+            /**
+             * Convert a local date to YYYY-MM-DD.
+             */
+            const dateKey = (date: Date): string => {
+                const year = date.getFullYear();
+
+                const month = String(
+                    date.getMonth() + 1
+                ).padStart(2, '0');
+
+                const day = String(
+                    date.getDate()
+                ).padStart(2, '0');
+
+                return `${year}-${month}-${day}`;
+            };
+
+            const parseDate = (value: string): Date => {
+                const [year, month, day] = value
+                    .split('-')
+                    .map(Number);
+
+                return new Date(year, month - 1, day);
+            };
+
+            const todayKey = dateKey(today);
+
+            const monthFormatter = new Intl.DateTimeFormat('en-GB', {
+                month: 'long',
+                year: 'numeric',
+            });
+
+            const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+
+            /**
+             * Find events taking place on a specific date.
+             */
+            const getEventsForDate = (date: string) => {
+                return eventCards.filter(card => {
+                    const start = card.dataset.start || '';
+                    const end = card.dataset.end || '';
+
+                    return start <= date && end >= date;
+                });
+            };
+
+            /**
+             * Find events taking place in the displayed month.
+             */
+            const getEventsForMonth = () => {
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth();
+
+                const firstDay = dateKey(
+                    new Date(year, month, 1)
+                );
+
+                const lastDay = dateKey(
+                    new Date(year, month + 1, 0)
+                );
+
+                return eventCards.filter(card => {
+                    const start = card.dataset.start || '';
+                    const end = card.dataset.end || '';
+
+                    return start <= lastDay && end >= firstDay;
+                });
+            };
+
+            /**
+             * Render the monthly calendar.
+             */
+            const renderCalendar = () => {
+                calendarGrid.replaceChildren();
+
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth();
+
+                monthLabel.textContent =
+                    monthFormatter.format(currentMonth);
+
+                const firstDay = new Date(year, month, 1);
+
+                const daysInMonth =
+                    new Date(year, month + 1, 0).getDate();
+
+                // Monday-first calendar.
+                const startOffset = (firstDay.getDay() + 6) % 7;
+
+                const createEmptyCell = () => {
+                    const empty = document.createElement('span');
+
+                    empty.className = 'calendar-empty';
+
+                    empty.setAttribute('aria-hidden', 'true');
+
+                    calendarGrid.append(empty);
+                };
+
+                // Empty cells before the first day.
+                for (let i = 0; i < startOffset; i++) {
+                    createEmptyCell();
+                }
+
+                // Render calendar dates.
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const key = dateKey(date);
+
+                    const dayEvents = getEventsForDate(key);
+
+                    const button = document.createElement('button');
+
+                    button.type = 'button';
+                    button.className = 'calendar-day';
+                    button.textContent = String(day);
+                    button.dataset.date = key;
+
+                    button.setAttribute(
+                        'aria-label',
+                        `${dateFormatter.format(date)}, ${
+                            dayEvents.length
+                        } ${dayEvents.length === 1 ? 'event' : 'events'}`
+                    );
+
+                    button.setAttribute(
+                        'aria-pressed',
+                        String(key === selectedDate)
+                    );
+
+                    if (key === todayKey) {
+                        button.classList.add('is-today');
+
+                        button.setAttribute('aria-current', 'date');
+                    }
+
+                    if (key === selectedDate) {
+                        button.classList.add('is-selected');
+                    }
+
+                    if (dayEvents.length > 0) {
+                        button.classList.add('has-event');
+
+                        const dot = document.createElement('span');
+
+                        dot.className = 'event-dot';
+
+                        dot.setAttribute('aria-hidden', 'true');
+
+                        button.append(dot);
+
+                        button.title = dayEvents
+                            .map(card => card.dataset.title || '')
+                            .join('\n');
+                    }
+
+                    calendarGrid.append(button);
+                }
+
+                // Maintain a consistent six-week calendar height.
+                const remainingCells =
+                    42 - startOffset - daysInMonth;
+
+                for (let i = 0; i < remainingCells; i++) {
+                    createEmptyCell();
+                }
+            };
+
+            /**
+             * Display upcoming, monthly or daily events.
+             */
+            const renderEvents = () => {
+                let visibleEvents: HTMLElement[];
+
+                if (viewMode === 'day' && selectedDate) {
+                    listHeading.textContent =
+                        dateFormatter.format(parseDate(selectedDate));
+
+                    visibleEvents = getEventsForDate(selectedDate);
+
+                } else if (viewMode === 'month') {
+                    listHeading.textContent =
+                        monthFormatter.format(currentMonth) +
+                        ' events';
+
+                    visibleEvents = getEventsForMonth();
+
+                } else {
+                    listHeading.textContent = 'Coming up';
+
+                    visibleEvents = eventCards
+                        .filter(card =>
+                            (card.dataset.end || '') >= todayKey
+                        )
+                        .slice(0, 4);
+                }
+
+                const visibleSet = new Set(visibleEvents);
+
+                eventCards.forEach(card => {
+                    card.hidden = !visibleSet.has(card);
+                });
+
+                resetButton.hidden = viewMode === 'upcoming';
+
+                emptyState.hidden = visibleEvents.length !== 0;
+            };
+
+            const render = () => {
+                renderCalendar();
+                renderEvents();
+            };
+
+            /**
+             * Handle calendar date selection.
+             */
+            calendarGrid.addEventListener('click', event => {
+                if (!(event.target instanceof Element)) return;
+
+                const button = event.target.closest<HTMLButtonElement>(
+                    'button[data-date]'
+                );
+
+                if (!button || !button.dataset.date) return;
+
+                const clickedDate = button.dataset.date;
+
+                if (selectedDate === clickedDate) {
+                    selectedDate = null;
+                    viewMode = 'month';
+                } else {
+                    selectedDate = clickedDate;
+                    viewMode = 'day';
+                }
+
+                render();
+
+                // Preserve keyboard focus.
+                calendarGrid
+                    .querySelector<HTMLButtonElement>(
+                        `[data-date="${clickedDate}"]`
+                    )
+                    ?.focus({ preventScroll: true });
+            });
+
+            /**
+             * Handle calendar navigation.
+             */
+            this.addEventListener('click', event => {
+                if (!(event.target instanceof Element)) return;
+
+                const button = event.target.closest<HTMLButtonElement>(
+                    'button[data-action]'
+                );
+
+                if (!button) return;
+
+                switch (button.dataset.action) {
+                    case 'previous':
+                        currentMonth = new Date(
+                            currentMonth.getFullYear(),
+                            currentMonth.getMonth() - 1,
+                            1
+                        );
+
+                        selectedDate = null;
+                        viewMode = 'month';
+
+                        break;
+
+                    case 'next':
+                        currentMonth = new Date(
+                            currentMonth.getFullYear(),
+                            currentMonth.getMonth() + 1,
+                            1
+                        );
+
+                        selectedDate = null;
+                        viewMode = 'month';
+
+                        break;
+
+                    case 'today':
+                        currentMonth = new Date(
+                            today.getFullYear(),
+                            today.getMonth(),
+                            1
+                        );
+
+                        selectedDate = todayKey;
+                        viewMode = 'day';
+
+                        break;
+
+                    case 'reset':
+                        currentMonth = new Date(
+                            today.getFullYear(),
+                            today.getMonth(),
+                            1
+                        );
+
+                        selectedDate = null;
+                        viewMode = 'upcoming';
+
+                        break;
+
+                    default:
+                        return;
+                }
+
+                render();
+
+                if (button.dataset.action === 'reset') {
+                    this.querySelector<HTMLButtonElement>(
+                        '[data-action="next"]'
+                    )?.focus({ preventScroll: true });
+                }
+            });
+
+            // Initial render.
+            render();
+        }
+    }
+
+    if (!customElements.get('automotive-calendar')) {
+        customElements.define(
+            'automotive-calendar',
+            AutomotiveCalendar
+        );
+    }
+</script>
+
+<style>
+    .upcoming-events {
+        --events-accent: #dc2626;
+        --events-on-accent: #ffffff;
+        --events-surface: #ffffff;
+        --events-background: #f5f5f5;
+        --events-text: #171717;
+        --events-muted: #737373;
+        --events-border: #e5e5e5;
+
+        width: 100%;
+        max-width: 1280px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+        box-sizing: border-box;
+        color: var(--events-text);
+    }
+
+    automotive-calendar {
+        display: block;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    /* Section heading */
+
+    .events-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .eyebrow {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--events-accent);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .events-header h2 {
+        margin: 0;
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.035em;
+    }
+
+    .events-header p {
+        margin: 0.5rem 0 0;
+        color: var(--events-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .header-icon {
+        flex-shrink: 0;
+        color: var(--events-accent);
+    }
+
+    /* Layout */
+
+    .events-layout {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1.25fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .calendar-panel,
+    .events-panel {
+        min-width: 0;
+        padding: 1.5rem;
+        background: var(--events-surface);
+        border: 1px solid var(--events-border);
+        border-radius: 12px;
+    }
+
+    /* Calendar navigation */
+
+    .calendar-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .calendar-navigation h3,
+    .events-list-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .nav-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        border: 1px solid var(--events-border);
+        border-radius: 8px;
+        background: var(--events-background);
+        color: var(--events-text);
+        font-size: 1.75rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-button:hover {
+        background: var(--events-accent);
+        color: var(--events-on-accent);
+    }
+
+    /* Calendar grid */
+
+    .calendar-weekdays,
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .calendar-weekdays {
+        margin-bottom: 0.75rem;
+    }
+
+    .calendar-weekdays span {
+        text-align: center;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--events-muted);
+    }
+
+    /*
+     * Calendar dates are generated by JavaScript,
+     * so these selectors require Astro's :global().
+     */
+
+    .upcoming-events :global(.calendar-day),
+    .upcoming-events :global(.calendar-empty) {
+        aspect-ratio: 1;
+        min-width: 0;
+    }
+
+    .upcoming-events :global(.calendar-day) {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--events-text);
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .upcoming-events :global(.calendar-day:hover) {
+        background: var(--events-background);
+    }
+
+    .upcoming-events :global(.calendar-day.is-today) {
+        border-color: var(--events-accent);
+        font-weight: 800;
+    }
+
+    .upcoming-events :global(.calendar-day.has-event) {
+        background: color-mix(
+            in srgb,
+            var(--events-accent) 12%,
+            transparent
+        );
+        color: var(--events-accent);
+        font-weight: 700;
+    }
+
+    .upcoming-events :global(.calendar-day.is-selected) {
+        background: var(--events-accent);
+        color: var(--events-on-accent);
+    }
+
+    .upcoming-events :global(.event-dot) {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Calendar footer */
+
+    .calendar-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--events-border);
+    }
+
+    .calendar-legend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--events-muted);
+        font-size: 0.75rem;
+    }
+
+    .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--events-accent);
+    }
+
+    .text-button {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--events-accent);
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .text-button:hover {
+        text-decoration: underline;
+    }
+
+    /* Events list */
+
+    .events-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--events-border);
+    }
+
+    .events-list {
+        display: flex;
+        flex-direction: column;
+        max-height: 520px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    /* Event cards */
+
+    .event-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid var(--events-border);
+    }
+
+    .event-card:not([hidden]):not(
+        :has(~ .event-card:not([hidden]))
+    ) {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .event-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 58px;
+        min-height: 68px;
+        border-radius: 8px;
+        background: var(--events-background);
+    }
+
+    .event-month {
+        color: var(--events-accent);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .event-day {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .event-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .event-category {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--events-accent);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .event-title {
+        margin: 0 0 0.4rem;
+        font-size: 1.05rem;
+        font-weight: 750;
+        line-height: 1.3;
+    }
+
+    .event-dates,
+    .event-location {
+        margin: 0.2rem 0;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+    }
+
+    .event-description {
+        margin: 0.65rem 0;
+        color: var(--events-muted);
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    .event-link {
+        display: inline-block;
+        margin-top: 0.25rem;
+        color: var(--events-accent);
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .event-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Empty state */
+
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--events-muted);
+    }
+
+    .empty-state h4 {
+        margin: 0 0 0.5rem;
+        color: var(--events-text);
+        font-size: 1rem;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    /* Full events calendar CTA */
+
+    .events-cta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .events-cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.9rem 1.75rem;
+        border-radius: 8px;
+        background: var(--events-accent);
+        color: var(--events-on-accent);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: filter 0.2s ease;
+    }
+
+    .events-cta-button:hover {
+        filter: brightness(0.85);
+    }
+
+    .events-cta-button svg {
+        transition: transform 0.2s ease;
+    }
+
+    .events-cta-button:hover svg {
+        transform: translateX(4px);
+    }
+
+    .events-cta p {
+        margin: 0;
+        color: var(--events-muted);
+        font-size: 0.8rem;
+    }
+
+    /* Accessibility */
+
+    .upcoming-events :global(button:focus-visible),
+    .upcoming-events :global(a:focus-visible) {
+        outline: 2px solid var(--events-accent);
+        outline-offset: 3px;
+    }
+
+    /* Mobile layout */
+
+    @media (max-width: 768px) {
+        .events-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .upcoming-events {
+            margin: 2rem auto;
+        }
+
+        .calendar-panel,
+        .events-panel {
+            padding: 1rem;
+        }
+
+        .events-list {
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .events-cta-button {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
+    /* Dark mode */
+
+    @media (prefers-color-scheme: dark) {
+        .upcoming-events {
+            --events-accent: #f87171;
+            --events-on-accent: #171717;
+            --events-surface: #171717;
+            --events-background: #262626;
+            --events-text: #f5f5f5;
+            --events-muted: #a3a3a3;
+            --events-border: #333333;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .upcoming-events :global(button),
+        .events-cta-button,
+        .events-cta-button svg {
+            transition: none;
+        }
+    }
+</style>
